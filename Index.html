@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our 2nd Anniversary</title>
+    <style>
+        :root {
+            --spotify-green: #1db954;
+            --spotify-black: #121212;
+            --spotify-grey: #b3b3b3;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--spotify-black);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 40px 0;
+            /* Memungkinkan halaman utama di-scroll */
+            overflow-y: auto; 
+        }
+
+        .spotify-container {
+            width: 85%;
+            max-width: 360px;
+            background: linear-gradient(to bottom, #444 0%, var(--spotify-black) 100%);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+
+        /* Foto Album & Animasi Slide */
+        .album-box {
+            width: 100%;
+            aspect-ratio: 1/1;
+            overflow: hidden;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .slider-content {
+            display: flex;
+            width: 100%;
+            transition: opacity 0.4s ease-in-out; /* Animasi fade-slide */
+        }
+
+        .album-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            object-fit: cover;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+
+        /* Info Lagu */
+        .track-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .track-text h1 { font-size: 1.4rem; margin: 0; }
+        .track-text p { color: var(--spotify-grey); margin: 5px 0 0 0; font-size: 0.9rem; }
+
+        .heart-btn { font-size: 1.6rem; cursor: pointer; transition: 0.2s; }
+        .heart-btn:active { transform: scale(1.3); }
+
+        /* Progress Bar */
+        .progress-area { margin-bottom: 10px; cursor: pointer; }
+        .bar-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
+        .bar-fill { width: 0%; height: 100%; background: white; border-radius: 2px; }
+        
+        .time-box {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--spotify-grey);
+            margin-top: 8px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0 30px 0;
+        }
+
+        .btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.8rem; }
+        .btn-play {
+            background: white; color: black;
+            width: 55px; height: 55px;
+            border-radius: 50%; display: flex;
+            justify-content: center; align-items: center;
+            font-size: 1.2rem;
+        }
+        .active-green { color: var(--spotify-green) !important; }
+
+        /* Long Teks Section (Bisa di-scroll) */
+        .lyrics-section {
+            background: rgba(255,255,255,0.08);
+            padding: 20px;
+            border-radius: 12px;
+            /* Atur tinggi dan scroll agar tidak macet */
+            max-height: 250px; 
+            overflow-y: auto;
+        }
+
+        .lyrics-section h3 { font-size: 0.8rem; margin-top: 0; letter-spacing: 1px; }
+
+        .lyrics-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            font-weight: bold;
+            white-space: pre-line;
+            color: #e0e0e0;
+        }
+
+        /* Notif Popup */
+        #notif {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--spotify-green);
+            padding: 12px 25px; border-radius: 30px;
+            font-weight: bold; display: none; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioTag" preload="metadata"></audio>
+    <div id="notif" style="display:none;"></div>
+
+    <div class="spotify-container">
+        <div class="album-box">
+            <img id="albumArt" class="album-img" src="IMG-20251109-WA0032.jpg" alt="Foto">
+        </div>
+
+        <div class="track-info">
+            <div class="track-text">
+                <h1 id="titleText">Our Message</h1>
+                <p id="artistText">Love Story</p>
+            </div>
+            <div class="heart-btn" onclick="sayThanks()">❤️</div>
+        </div>
+
+        <div class="progress-area" id="progressClick">
+            <div class="bar-bg">
+                <div class="bar-fill" id="barFill"></div>
+            </div>
+            <div class="time-box">
+                <span id="cTime">0:00</span>
+                <span id="dTime">0:00</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="repeatIcon" onclick="doRepeat()">🔁</button>
+            <button class="btn" onclick="prev()">⏮</button>
+            <button class="btn btn-play" onclick="playPause()" id="playBtn">▶</button>
+            <button class="btn" onclick="next()">⏭</button>
+            <button class="btn" onclick="location.reload()">🔀</button>
+        </div>
+
+        <div class="lyrics-section">
+            <h3>LYRICS / OUR STORY</h3>
+            <div class="lyrics-text" id="lyricsText">Lirik sementara...</div>
+        </div>
+    </div>
+
+<script>
+    const audio = document.getElementById("audioTag");
+    const albumArt = document.getElementById("albumArt");
+    const playBtn = document.getElementById("playBtn");
+    const barFill = document.getElementById("barFill");
+
+    const playlist = [
+        {
+            title: "Our Message",
+            artist: "Love of My Life",
+            file: "Message.mp3",
+            img: "IMG-20251109-WA0032.jpg",
+            text: "Dua tahun yang lalu, segalanya dimulai dengan sapaan sederhana yang ternyata mengubah seluruh hidupku. Nggak pernah terpikir kalau perjalanan ini bakalan jadi lagu yang paling indah yang pernah aku dengar. \n\n Selama 730 hari ini, kamu sudah jadi saksi gimana aku jatuh dan bangun. Terima kasih sudah tetap tinggal saat duniaku sedang berisik, dan terima kasih sudah menjadi tempat paling tenang untukku pulang. Pesan ini mungkin singkat, tapi di dalamnya ada doa yang nggak pernah putus agar kita tetap selamanya seperti ini. Happy 2nd Anniversary, Sayang."
+        },
+        {
+            title: "Hearing You",
+            artist: "Us",
+            file: "Radio.mp3",
+            img: "IMG-20251109-WA0033.jpg", // Ganti jika ada foto ke-2
+            text: "Kamu itu seperti lagu favorit di radio yang muncul tiba-tiba di tengah perjalanan; selalu bisa merubah suasana hati jadi lebih baik secara instan. Aku suka cara kita menertawakan hal-hal kecil, cara kita berbagi cerita random sampai larut malam, dan cara kamu memahami aku tanpa perlu aku ucapkan. \n\n Seperti radio yang terus menemani sepanjang jalan, aku pun ingin terus menemanimu di setiap rute hidup yang kita ambil. Nggak peduli seberapa jauh atau seberapa terjal jalannya, asalkan frekuensinya tetap sama, yaitu kamu."
+        },
+        {
+            title: "I Love You",
+            artist: "Me",
+            file: "pasilyo.mp3",
+            img: "IMG-20251109-WA0056.jpg", // Ganti jika ada foto ke-3
+            text: "Sumpah, ikaw lang ang nais kong makasama. Mendengar lagu ini selalu membuatku membayangkan masa depan kita nanti. Aku membayangkan suatu saat nanti, kita benar-benar berjalan di 'Pasilyo' (lorong) menuju janji yang lebih suci.\n\n Terima kasih sudah memilihku untuk menjadi pasanganmu selama 2 tahun ini. Aku tahu kita masih punya banyak lorong waktu yang harus dilewati, tapi selama tanganku masih kamu genggam, aku nggak akan pernah takut. Mari kita buat tahun-tahun berikutnya jauh lebih indah dari ini. Aku mencintaimu, hari ini, besok, dan selamanya."
+        }
+    ];
+
+    let songIdx = 0;
+    let isRepeating = false;
+
+    function loadSong(i) {
+        const s = playlist[i];
+        
+        // Efek animasi transisi gambar
+        albumArt.style.opacity = "0";
+        
+        setTimeout(() => {
+            audio.src = s.file;
+            audio.load();
+            albumArt.src = s.img;
+            document.getElementById("titleText").innerText = s.title;
+            document.getElementById("artistText").innerText = s.artist;
+            document.getElementById("lyricsText").innerText = s.text;
+            albumArt.style.opacity = "1";
+        }, 300);
+    }
+
+    function playPause() {
+        if (audio.paused) {
+            audio.play().then(()=> {
+                playBtn.innerText = "⏸";
+            }).catch((err)=> {
+                console.warn('Play rejected:', err);
+                showNotif('Klik tombol Play untuk mengizinkan pemutaran');
+            });
+        } else {
+            audio.pause();
+            playBtn.innerText = "▶";
+        }
+    }
+
+    function next() {
+        songIdx = (songIdx + 1) % playlist.length;
+        loadSong(songIdx);
+        const title = playlist[songIdx].title;
+        const tryPlay = () => {
+            audio.play().then(()=> {
+                playBtn.innerText = "⏸";
+            }).catch(() => {
+                playBtn.innerText = "▶";
+                showNotif(`Gagal memutar: ${title}. Klik Play untuk memulai.`);
+            });
+        };
+        audio.addEventListener('canplaythrough', tryPlay, {once:true});
+        setTimeout(tryPlay, 800);
+    }
+
+    function prev() {
+        songIdx = (songIdx - 1 + playlist.length) % playlist.length;
+        loadSong(songIdx);
+        const title = playlist[songIdx].title;
+        const tryPlay = () => {
+            audio.play().then(()=> {
+                playBtn.innerText = "⏸";
+            }).catch(() => {
+                playBtn.innerText = "▶";
+                showNotif(`Gagal memutar: ${title}. Klik Play untuk memulai.`);
+            });
+        };
+        audio.addEventListener('canplaythrough', tryPlay, {once:true});
+        setTimeout(tryPlay, 800);
+    }
+
+    function doRepeat() {
+        isRepeating = !isRepeating;
+        document.getElementById('repeatIcon').classList.toggle('active-green', isRepeating);
+    }
+
+        function sayThanks() {
+            const notif = document.getElementById('notif');
+            notif.innerText = "terimakasih sayang";
+            notif.style.display = "block";
+            notif.style.opacity = "1";
+            // sembunyikan setelah beberapa saat dengan fade
+            setTimeout(() => {
+                notif.style.transition = "opacity 0.4s ease";
+                notif.style.opacity = "0";
+                setTimeout(()=> notif.style.display = "none", 400);
+            }, 1500);
+            // efek visual pada tombol hati
+            const heart = document.querySelector('.heart-btn');
+            heart.classList.add('active-green');
+            setTimeout(()=> heart.classList.remove('active-green'), 1200);
+        }
+
+        function formatTime(sec) {
+            if (!sec || isNaN(sec)) return "0:00";
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60).toString().padStart(2,'0');
+            return `${m}:${s}`;
+        }
+
+        // Update progress dan waktu
+        const cTimeEl = document.getElementById('cTime');
+        const dTimeEl = document.getElementById('dTime');
+        const progressClick = document.getElementById('progressClick');
+
+        audio.addEventListener('timeupdate', () => {
+            const curr = audio.currentTime || 0;
+            const dur = audio.duration || 0;
+            const percent = dur ? (curr / dur) * 100 : 0;
+            barFill.style.width = percent + "%";
+            cTimeEl.innerText = formatTime(curr);
+        });
+
+        audio.addEventListener('loadedmetadata', () => {
+            dTimeEl.innerText = formatTime(audio.duration);
+        });
+
+        audio.addEventListener('play', () => { playBtn.innerText = "⏸"; });
+        audio.addEventListener('pause', () => { playBtn.innerText = "▶"; });
+
+        audio.addEventListener('ended', () => {
+            if (isRepeating) {
+                audio.currentTime = 0;
+                // try to play again and handle promise rejection
+                audio.play().catch(() => showNotif('Klik play untuk mengizinkan pemutaran'));
+            } else {
+                next();
+            }
+        });
+
+        // Handle audio load/play errors with detailed message
+        audio.addEventListener('error', (ev) => {
+            console.error('Audio error event:', ev);
+            const s = playlist[songIdx];
+            const err = audio.error;
+            let reason = '';
+            if (err) {
+                switch(err.code) {
+                    case err.MEDIA_ERR_ABORTED: reason = ' (aborted)'; break;
+                    case err.MEDIA_ERR_NETWORK: reason = ' (network)'; break;
+                    case err.MEDIA_ERR_DECODE: reason = ' (decode)'; break;
+                    case err.MEDIA_ERR_SRC_NOT_SUPPORTED: reason = ' (format tidak didukung)'; break;
+                    default: reason = '';
+                }
+            }
+            console.debug('Audio src:', audio.src, 'error code:', err && err.code);
+            showNotif(`Gagal memutar: ${s ? s.title : 'file audio'}${reason}`);
+        });
+
+        function showNotif(text, timeout = 1800) {
+            const notif = document.getElementById('notif');
+            notif.innerText = text;
+            notif.style.display = 'block';
+            notif.style.opacity = '1';
+            setTimeout(() => {
+                notif.style.transition = 'opacity 0.35s ease';
+                notif.style.opacity = '0';
+                setTimeout(()=> notif.style.display = 'none', 350);
+            }, timeout);
+        }
+
+        progressClick.addEventListener('click', (e) => {
+            const rect = progressClick.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const width = rect.width;
+            const newTime = (clickX / width) * (audio.duration || 0);
+            audio.currentTime = newTime;
+        });
+
+        // Swipe untuk ganti lagu (animasi slide) — touch & mouse/pointer
+        let touchStartX = 0;
+        let pointerStartX = null;
+        const albumBox = document.querySelector('.album-box');
+
+        albumBox.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].clientX;
+        }, {passive:true});
+
+        albumBox.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const dx = touchEndX - touchStartX;
+            if (Math.abs(dx) > 40) {
+                if (dx < 0) { animateSlide('left'); next(); }
+                else { animateSlide('right'); prev(); }
+            }
+        });
+
+        // pointer (mouse) fallback
+        albumBox.addEventListener('pointerdown', (e) => {
+            pointerStartX = e.clientX;
+        });
+
+        albumBox.addEventListener('pointerup', (e) => {
+            if (pointerStartX === null) return;
+            const dx = e.clientX - pointerStartX;
+            pointerStartX = null;
+            if (Math.abs(dx) > 40) {
+                if (dx < 0) { animateSlide('left'); next(); }
+                else { animateSlide('right'); prev(); }
+            }
+        });
+
+        function animateSlide(dir) {
+            const offset = dir === 'left' ? '-15%' : '15%';
+            albumArt.style.transition = 'transform 0.35s ease, opacity 0.35s ease';
+            albumArt.style.transform = `translateX(${offset})`;
+            albumArt.style.opacity = '0.6';
+            setTimeout(() => {
+                albumArt.style.transform = 'translateX(0)';
+                albumArt.style.opacity = '1';
+            }, 350);
+        }
+
+        // Inisialisasi
+        window.addEventListener('load', () => {
+            loadSong(songIdx);
+            // placeholder lirik diset di HTML awal
+        });
+
+        // Klik pada gambar juga toggle play/pause
+        albumArt.addEventListener('click', () => playPause());
+
+        // Akhir skrip
+    </script>
+</body>
+</html>
